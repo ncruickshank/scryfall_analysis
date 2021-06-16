@@ -25,7 +25,7 @@ evasion_keywords = ['Flying', 'Trample', 'Menace',
                     'Plainswalk', 'Islandwalk', 'Forestwalk', 'Mountainwalk', 'Swampwalk',
                     'Skulk', 'Shadow', 'Fear', 'Intimidate']
 pioneer['evasion'] = pioneer['keywords'].apply(lambda x: bool(any(item in x for item in evasion_keywords)))
-#pioneer.color_identity = pioneer.color_identity.apply(lambda x: '[C]' if len(x)==0 else x)
+pioneer['color_identity'] = pioneer['color_identity'].apply(lambda x: x.replace('[]', '[C]'))
 
 ## removal bool
 removal_regexes = [
@@ -37,6 +37,7 @@ removal_regexes = [
     re.compile(r'enchanted creature doesn\'t untap'),
     re.compile(r'return target (creature|nonland permanent) to its owner\'s hand'),
     re.compile(r'put target (creature|permanent)'),
+    re.compile(r'counter target .* spell'),
     
     # black removal
     re.compile(r'destroy target (creature|permanent)'),
@@ -101,20 +102,26 @@ def creature_curve_variables(color_identity):
     noncreature_removal_spell_ratio = len(noncreatures[noncreatures['removal'] == True]) / len(noncreatures)
     noncreature_combat_trick_ratio = len(noncreatures[noncreatures['combat_trick'] == True]) / len(noncreatures)
     
-    return creature_ratio, creatures_w_evasion, creature_curve_df
+    return creature_ratio, creatures_w_evasion, creature_curve_df, noncreature_removal_spell_ratio, noncreature_combat_trick_ratio
 
 ## set up the plot
 fig, axs = plt.subplots(2,3)
-fig.set_figheight(15)
+fig.set_figheight(18)
 fig.set_figwidth(30)
-fig.suptitle('MTG Pioneer Sets: Common Creature Curve', fontsize = 20)
+fig.suptitle('Magic the Gathering:\nDistribution of Pioneer-Legal Common Cards (as of Strixhaven)', fontsize = 20)
 
 ## subplot 1: white
-creature_ratio_w, creatures_w_evasion_w, creature_curve_df_w = creature_curve_variables('[W]')
+creature_ratio_w, creatures_w_evasion_w, creature_curve_df_w, noncreature_removal_spell_ratio_w, noncreature_combat_trick_ratio_w = creature_curve_variables('[W]')
 
 ### set axis title
-axs[0,0].set_title('WHITE: {} of commons are creatures. {} of creatures have evasion.'.
-              format(str(round(100 * creature_ratio_w)) + '%', str(round(100*creatures_w_evasion_w)) + '%'))
+axs[0,0].set_title('WHITE COMMONS:\n{} of commons are creatures. {} of creatures have evasion.\n{} of noncreatures are removal. {} of noncreatures are combat tricks.'.
+              format(
+                  str(round(100 * creature_ratio_w)) + '%',
+                  str(round(100 * creatures_w_evasion_w)) + '%',
+                  str(round(100 * noncreature_removal_spell_ratio_w)) + '%', 
+                  str(round(100 * noncreature_combat_trick_ratio_w)) + '%')
+              )
+axs[0,0].set_xlabel('Creature Curve (Mana Value)')
 
 ### plot curve
 axs[0,0].bar(x = creature_curve_df_w['cmc'], height = creature_curve_df_w['mean'], yerr = creature_curve_df_w['std'],
@@ -127,11 +134,17 @@ for index, row in creature_curve_df_w.iterrows():
 
 
 ## subplot 2: blue
-creature_ratio_u, creatures_w_evasion_u, creature_curve_df_u = creature_curve_variables('[U]')
+creature_ratio_u, creatures_w_evasion_u, creature_curve_df_u, noncreature_removal_spell_ratio_u, noncreature_combat_trick_ratio_u = creature_curve_variables('[U]')
 
 ### set axis title
-axs[0,1].set_title('BLUE: {} of commons are creatures. {} of creatures have evasion.'.
-              format(str(round(100 * creature_ratio_u)) + '%', str(round(100*creatures_w_evasion_u)) + '%'))
+axs[0,1].set_title('BLUE COMMONS:\n{} of commons are creatures. {} of creatures have evasion.\n{} of noncreatures are removal. {} of noncreatures are combat tricks.'.
+              format(
+                  str(round(100 * creature_ratio_u)) + '%',
+                  str(round(100 * creatures_w_evasion_u)) + '%',
+                  str(round(100 * noncreature_removal_spell_ratio_u)) + '%', 
+                  str(round(100 * noncreature_combat_trick_ratio_u)) + '%')
+              )
+axs[0,1].set_xlabel('Creature Curve (Mana Value)')
 
 ### plot curve
 axs[0,1].bar(x = creature_curve_df_u['cmc'], height = creature_curve_df_u['mean'], yerr = creature_curve_df_u['std'],
@@ -143,11 +156,17 @@ for index, row in creature_curve_df_u.iterrows():
     axs[0,1].text(row['cmc'], 0.25, round(row['count_ratio'], 2), horizontalalignment = 'center')
 
 ## subplot 3: black
-creature_ratio_b, creatures_w_evasion_b, creature_curve_df_b = creature_curve_variables('[B]')
+creature_ratio_b, creatures_w_evasion_b, creature_curve_df_b, noncreature_removal_spell_ratio_b, noncreature_combat_trick_ratio_b = creature_curve_variables('[B]')
 
 ### set axis title
-axs[0,2].set_title('BLACK: {} of commons are creatures. {} of creatures have evasion.'.
-              format(str(round(100 * creature_ratio_b)) + '%', str(round(100*creatures_w_evasion_b)) + '%'))
+axs[0,2].set_title('BLACK COMMONS:\n{} of commons are creatures. {} of creatures have evasion.\n{} of noncreatures are removal. {} of noncreatures are combat tricks.'.
+              format(
+                  str(round(100 * creature_ratio_b)) + '%',
+                  str(round(100 * creatures_w_evasion_b)) + '%',
+                  str(round(100 * noncreature_removal_spell_ratio_b)) + '%', 
+                  str(round(100 * noncreature_combat_trick_ratio_b)) + '%')
+              )
+axs[0,2].set_xlabel('Creature Curve (Mana Value)')
 
 ### plot curve
 axs[0,2].bar(x = creature_curve_df_b['cmc'], height = creature_curve_df_b['mean'], yerr = creature_curve_df_b['std'],
@@ -159,11 +178,17 @@ for index, row in creature_curve_df_b.iterrows():
     axs[0,2].text(row['cmc'], 0.25, round(row['count_ratio'], 2), horizontalalignment = 'center')
 
 ## subplot 4: red
-creature_ratio_r, creatures_w_evasion_r, creature_curve_df_r = creature_curve_variables('[R]')
+creature_ratio_r, creatures_w_evasion_r, creature_curve_df_r, noncreature_removal_spell_ratio_r, noncreature_combat_trick_ratio_r = creature_curve_variables('[R]')
 
 ### set axis title
-axs[1,0].set_title('RED: {} of commons are creatures. {} of creatures have evasion.'.
-              format(str(round(100 * creature_ratio_r)) + '%', str(round(100*creatures_w_evasion_r)) + '%'))
+axs[1,0].set_title('RED COMMONS:\n{} of commons are creatures. {} of creatures have evasion.\n{} of noncreatures are removal. {} of noncreatures are combat tricks.'.
+              format(
+                  str(round(100 * creature_ratio_r)) + '%',
+                  str(round(100 * creatures_w_evasion_r)) + '%',
+                  str(round(100 * noncreature_removal_spell_ratio_r)) + '%', 
+                  str(round(100 * noncreature_combat_trick_ratio_r)) + '%')
+              )
+axs[1,0].set_xlabel('Creature Curve (Mana Value)')
 
 ### plot curve
 axs[1,0].bar(x = creature_curve_df_r['cmc'], height = creature_curve_df_r['mean'], yerr = creature_curve_df_r['std'],
@@ -175,11 +200,17 @@ for index, row in creature_curve_df_r.iterrows():
     axs[1,0].text(row['cmc'], 0.25, round(row['count_ratio'], 2), horizontalalignment = 'center')
 
 ## subplot 5: green
-creature_ratio_g, creatures_w_evasion_g, creature_curve_df_g = creature_curve_variables('[G]')
+creature_ratio_g, creatures_w_evasion_g, creature_curve_df_g, noncreature_removal_spell_ratio_g, noncreature_combat_trick_ratio_g = creature_curve_variables('[G]')
 
 ### set axis title
-axs[1,1].set_title('GREEN: {} of commons are creatures. {} of creatures have evasion.'.
-              format(str(round(100 * creature_ratio_g)) + '%', str(round(100*creatures_w_evasion_g)) + '%'))
+axs[1,1].set_title('GREEN COMMONS:\n{} of commons are creatures. {} of creatures have evasion.\n{} of noncreatures are removal. {} of noncreatures are combat tricks.'.
+              format(
+                  str(round(100 * creature_ratio_g)) + '%',
+                  str(round(100 * creatures_w_evasion_g)) + '%',
+                  str(round(100 * noncreature_removal_spell_ratio_g)) + '%', 
+                  str(round(100 * noncreature_combat_trick_ratio_g)) + '%')
+              )
+axs[1,1].set_xlabel('Creature Curve (Mana Value)')
 
 ### plot curve
 axs[1,1].bar(x = creature_curve_df_g['cmc'], height = creature_curve_df_g['mean'], yerr = creature_curve_df_g['std'],
@@ -191,4 +222,23 @@ for index, row in creature_curve_df_g.iterrows():
     axs[1,1].text(row['cmc'], 0.25, round(row['count_ratio'], 2), horizontalalignment = 'center')
 
 ## subplot 6: colorless
-axs[1,2].set_title('Colorless')
+creature_ratio_c, creatures_w_evasion_c, creature_curve_df_c, noncreature_removal_spell_ratio_c, noncreature_combat_trick_ratio_c = creature_curve_variables('[C]')
+
+### set axis title
+axs[1,2].set_title('COLORLESS COMMONS:\n{} of commons are creatures. {} of creatures have evasion.\n{} of noncreatures are removal. {} of noncreatures are combat tricks.'.
+              format(
+                  str(round(100 * creature_ratio_c)) + '%',
+                  str(round(100 * creatures_w_evasion_c)) + '%',
+                  str(round(100 * noncreature_removal_spell_ratio_c)) + '%', 
+                  str(round(100 * noncreature_combat_trick_ratio_c)) + '%')
+              )
+axs[1,2].set_xlabel('Creature Curve (Mana Value)')
+
+### plot curve
+axs[1,2].bar(x = creature_curve_df_c['cmc'], height = creature_curve_df_c['mean'], yerr = creature_curve_df_c['std'],
+            color = 'gray', edgecolor = 'black')
+
+### add text to bars
+for index, row in creature_curve_df_c.iterrows():
+    axs[1,2].text(row['cmc'], 0.5, 'Ratio:', horizontalalignment = 'center')
+    axs[1,2].text(row['cmc'], 0.25, round(row['count_ratio'], 2), horizontalalignment = 'center')
